@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Directory</title>
+</head>
+<body>
+    <h1>Student Directory</h1>
+<form action="/add" method="POST">
+    <label for="name">Name:</label>
+    <input id="name" type="text" name="name" required>
+
+    <label for="school">School:</label>
+    <input id="school" type="text" name="school" required>
+
+    <button type="submit">Add Student</button>
+</form>
+    {% if students %}
+        <ul>
+            {% for student in students %}
+                <li>{{ student[1] }} — {{ student[2] }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No students yet.</p>
+    {% endif %}
+</body>
+</html>
