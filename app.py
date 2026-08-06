@@ -46,5 +46,22 @@ def add_student():
 
     return redirect("/")
 
+@app.route("/delete/<int:student_id>", methods=["POST"])
+def delete_student(student_id):
+    connection = get_connection()
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+	    "DELETE FROM students WHERE id = %s;",
+	    (student_id,),
+	)
+
+    connection.commit()
+    connection.close()
+
+    return redirect("/")
+
+
+
 if __name__ == "__main__":
     app.run(debug=True)
