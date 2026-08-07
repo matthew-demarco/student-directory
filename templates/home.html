@@ -5,26 +5,30 @@
 </head>
 <body>
     <h1>Student Directory</h1>
-<form action="/add" method="POST">
-    <label for="name">Name:</label>
-    <input id="name" type="text" name="name" required>
 
-    <label for="school">School:</label>
-    <input id="school" type="text" name="school" required>
+    <form action="/add" method="POST">
+        <label for="name">Name:</label>
+        <input id="name" type="text" name="name" required>
 
-    <button type="submit">Add Student</button>
-</form>
+        <label for="school">School:</label>
+        <input id="school" type="text" name="school" required>
+
+        <button type="submit">Add Student</button>
+    </form>
+
     {% if students %}
         <ul>
             {% for student in students %}
-    <li>
-        {{ student[1] }} — {{ student[2] }}
+                <li>
+                    {{ student[1] }} — {{ student[2] }}
 
-        <form action="/delete/{{ student[0] }}" method="POST">
-            <button type="submit">Delete</button>
-        </form>
-    </li>
-{% endfor %}
+                    <a href="/edit/{{ student[0] }}">Edit</a>
+
+                    <form action="/delete/{{ student[0] }}" method="POST">
+                        <button type="submit">Delete</button>
+                    </form>
+                </li>
+            {% endfor %}
         </ul>
     {% else %}
         <p>No students yet.</p>
