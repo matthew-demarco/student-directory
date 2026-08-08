@@ -1,10 +1,11 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, flash
 import psycopg
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY")
 
 
 def get_connection():
@@ -33,8 +34,12 @@ def home():
 
 @app.route("/add", methods=["POST"])
 def add_student():
-    name = request.form["name"]
-    school = request.form["school"]
+    name = request.form["name"].strip()
+    school = request.form["school"].strip()
+
+    if not name or not school:
+        flash("Name and school are required.")
+        return redirect("/")
 
     connection = get_connection()
 
@@ -81,8 +86,12 @@ def edit_student(student_id):
 
 @app.route("/update/<int:student_id>", methods=["POST"])
 def update_student(student_id):
-    name = request.form["name"]
-    school = request.form["school"]
+    name = request.form["name"].strip()
+    school = request.form["school"].strip()
+
+    if not name or not school:
+        flash("Name and school are required.")
+        return redirect(f"/edit/{student_id}")
 
     connection = get_connection()
 

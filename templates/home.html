@@ -5,6 +5,16 @@
 </head>
 <body>
     <h1>Student Directory</h1>
+    
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+	    {% for message in messages %}
+                <p>{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %} 
+
+
 
     <form action="/add" method="POST">
         <label for="name">Name:</label>
