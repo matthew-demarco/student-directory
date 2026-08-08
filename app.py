@@ -64,6 +64,10 @@ def delete_student(student_id):
 	    (student_id,),
 	)
 
+        if cursor.rowcount == 0:
+	    connection.close()
+            return "Student not found.", 404
+
     connection.commit()
     connection.close()
 
@@ -81,7 +85,11 @@ def edit_student(student_id):
         )
         student = cursor.fetchone()
 
-    connection.close()
+        connection.close()
+
+        if student is None:
+            return "Student not found.", 404
+
     return render_template("edit.html", student=student)
 
 @app.route("/update/<int:student_id>", methods=["POST"])
@@ -100,6 +108,11 @@ def update_student(student_id):
 	    "UPDATE students SET name = %s, school = %s WHERE id = %s",
 	    (name, school, student_id),
 	)
+
+    if cursor.rowcount == 0:
+        connection.close()
+        return "Student not found.", 404
+
     connection.commit()
     connection.close()
 
