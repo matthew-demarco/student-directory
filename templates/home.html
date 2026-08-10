@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Student Directory</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <h1>Student Directory</h1>
@@ -9,7 +10,7 @@
     {% with messages = get_flashed_messages() %}
         {% if messages %}
 	    {% for message in messages %}
-                <p>{{ message }}</p>
+                <p class="flash-message">{{ messages }}</p>
             {% endfor %}
         {% endif %}
     {% endwith %} 

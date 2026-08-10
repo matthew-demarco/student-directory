@@ -65,7 +65,7 @@ def delete_student(student_id):
 	)
 
         if cursor.rowcount == 0:
-	    connection.close()
+            connection.close()
             return "Student not found.", 404
 
     connection.commit()
