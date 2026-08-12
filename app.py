@@ -31,6 +31,134 @@ def home():
 
     return render_template("home.html", students=students)
 
+@app.route("/api/students")
+def api_students():
+    connection = get_connection()
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT id, name, school FROM students ORDER BY id;"
+        )
+        rows = cursor.fetchall()
+
+    connection.close()
+
+    students = []
+
+    for row in rows:
+        students.append({
+	    "id": row[0],
+            "name": row[1],
+            "school": row[2],
+        })
+
+    return students
+
+@app.route("/api/students/<int:student_id>")
+def api_student(student_id):
+    connection = get_connection()
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT id, name, school FROM students WHERE id = %s;",
+            (student_id,)
+        )
+        row = cursor.fetchone()
+
+    connection.close()
+
+    if row is None:
+        return {"error": "Student not found"}, 404
+
+    return {
+        "id": row[0],
+        "name": row[1],
+        "school": row[2]
+    }
+
+@app.route("/api/students", methods=["POST"])
+def api_add_student():
+    data = request.get_json()
+
+    name = data.get("name", "").strip()
+    school = data.get("school", "").strip()
+
+    if not name or not school:
+        return {"error": "Name and school are required."}, 400
+
+    connection = get_connection()
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "INSERT INTO students (name, school) VALUES (%s, %s) RETURNING id;",
+            (name, school)
+        )
+        student_id = cursor.fetchone()[0]
+
+    connection.commit()
+    connection.close()
+
+    return {
+        "id": student_id,
+        "name": name,
+        "school": school
+    }, 201
+
+
+@app.route("/api/students/<int:student_id>", methods=["PUT"])
+def api_update_student(student_id):
+    data = request.get_json()
+
+    name = data.get("name", "").strip()
+    school = data.get("school", "").strip()
+
+    if not name or not school:
+        return {"error": "Name and school are required."}, 400
+
+    connection = get_connection()
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            UPDATE students
+            SET name = %s, school = %s
+            WHERE id = %s;
+            """,
+            (name, school, student_id)
+        )
+
+        if cursor.rowcount == 0:
+            connection.close()
+            return {"error": "Student not found"}, 404
+
+    connection.commit()
+    connection.close()
+
+    return {
+        "id": student_id,
+        "name": name,
+        "school": school
+    }
+
+
+@app.route("/api/students/<int:student_id>", methods=["DELETE"])
+def api_delete_student(student_id):
+    connection = get_connection()
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "DELETE FROM students WHERE id = %s;",
+            (student_id,)
+        )
+
+        if cursor.rowcount == 0:
+            connection.close()
+            return {"error": "Student not found"}, 404
+
+    connection.commit()
+    connection.close()
+
+    return {"message": "Student deleted"}
 
 @app.route("/add", methods=["POST"])
 def add_student():
