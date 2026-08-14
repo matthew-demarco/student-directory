@@ -157,3 +157,148 @@ def test_delete_student(clean_test_student):
     connection.close()
 
     assert student is None
+
+def test_api_get_students():
+    client = app.test_client()
+
+    response = client.get("/api/students")
+
+    assert response.status_code == 200
+    assert response.is_json
+
+def test_api_get_missing_student():
+    client = app.test_client()
+
+    response = client.get("/api/students/99999")
+
+    assert response.status_code == 404
+    assert response.is_json
+    assert response.get_json()["error"] == "Student not found"
+def test_api_get_student(clean_test_student):
+    client = app.test_client()
+
+    connection = get_connection()
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            INSERT INTO students (name, school)
+            VALUES (%s, %s)
+            RETURNING id;
+            """,
+            ("Test Student", "Test School")
+        )
+
+        student_id = cursor.fetchone()[0]
+
+    connection.commit()
+    connection.close()
+
+    response = client.get(f"/api/students/{student_id}")
+
+    assert response.status_code == 200
+    assert response.is_json
+
+    data = response.get_json()
+
+    assert data["id"] == student_id
+    assert data["name"] == "Test Student"
+    assert data["school"] == "Test School"
+def test_api_add_student(clean_test_student):
+    client = app.test_client()
+
+    response = client.post(
+        "/api/students",
+        json={
+            "name": "Test Student",
+            "school": "Test School"
+        }
+    )
+
+    assert response.status_code == 201
+    assert response.is_json
+
+    data = response.get_json()
+
+    assert data["name"] == "Test Student"
+    assert data["school"] == "Test School"
+
+def test_api_update_student(clean_test_student):
+    client = app.test_client()
+
+    connection = get_connection()
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            INSERT INTO students (name, school)
+            VALUES (%s, %s)
+            RETURNING id;
+            """,
+            ("Test Student", "Test School")
+        )
+        student_id = cursor.fetchone()[0]
+
+    connection.commit()
+    connection.close()
+
+    response = client.put(
+        f"/api/students/{student_id}",
+        json={
+            "name": "Updated Student",
+            "school": "Updated School"
+        }
+    )
+
+    assert response.status_code == 200
+    assert response.is_json
+
+    data = response.get_json()
+
+    assert data["name"] == "Updated Student"
+    assert data["school"] == "Updated School"
+
+def test_api_delete_student(clean_test_student):
+    client = app.test_client()
+
+    connection = get_connection()
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            INSERT INTO students (name, school)
+            VALUES (%s, %s)
+            RETURNING id;
+            """,
+            ("Test Student", "Test School")
+        )
+        student_id = cursor.fetchone()[0]
+
+    connection.commit()
+    connection.close()
+
+    response = client.delete(f"/api/students/{student_id}")
+
+    assert response.status_code == 200
+    assert response.is_json
+
+    data = response.get_json()
+
+    assert data["message"] == "Student deleted"
+def test_api_add_student_rejects_blank_name():
+    client = app.test_client()
+
+    response = client.post(
+        "/api/students",
+        json={
+            "name": "",
+            "school": "Test School"
+        }
+    )
+
+    assert response.status_code == 400
+    assert response.is_json
+
+    data = response.get_json()
+
+    assert data["error"] == "Name and school are required."
