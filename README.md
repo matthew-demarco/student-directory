@@ -2,6 +2,8 @@
 
 A full-stack web application built with Flask and PostgreSQL that allows users to add, view, edit, and delete student records.
 
+The project also includes a JSON REST API, automated pytest coverage, and Docker Compose support for running Flask and PostgreSQL in separate containers.
+
 ## Screenshots
 
 ### Student Directory
@@ -24,35 +26,20 @@ A full-stack web application built with Flask and PostgreSQL that allows users t
 
 ```mermaid
 flowchart TD
-    A[User opens Student Directory] --> B[Browser sends GET /]
-    B --> C[Flask home route executes]
-    C --> D[Connect to PostgreSQL]
-    D --> E[SELECT students from database]
-    E --> F[Render home.html with Jinja]
-    F --> G[Browser displays students]
+    A[User or API Client] --> B[Flask Application]
 
-    G --> H{User Action}
+    B --> C[HTML Routes]
+    B --> D[REST API Routes]
 
-    H -->|Add Student| I[POST /add]
-    I --> J[Validate name and school]
-    J --> K[INSERT student into PostgreSQL]
-    K --> L[Commit transaction]
-    L --> B
+    C --> E[PostgreSQL]
+    D --> E
 
-    H -->|Edit Student| M[GET /edit/student_id]
-    M --> N[SELECT student by ID]
-    N --> O[Render edit.html]
-    O --> P[User edits information]
-    P --> Q[POST /update/student_id]
-    Q --> R[Validate updated values]
-    R --> S[UPDATE student in PostgreSQL]
-    S --> T[Commit transaction]
-    T --> B
+    E --> B
 
-    H -->|Delete Student| U[POST /delete/student_id]
-    U --> V[DELETE student from PostgreSQL]
-    V --> W[Commit transaction]
-    W --> B
+    C --> F[Jinja Templates]
+    F --> G[HTML Response]
+
+    D --> H[JSON Response]
 ```
 
 ## Features
@@ -66,7 +53,9 @@ flowchart TD
 - 404 handling for students that do not exist
 - PostgreSQL database persistence
 - Environment variables for configuration and secrets
+- JSON REST API
 - Automated testing with pytest
+- API endpoint testing
 - Dockerized Flask application
 - PostgreSQL container managed with Docker Compose
 - Persistent PostgreSQL data using a Docker volume
@@ -92,14 +81,14 @@ flowchart TD
 
 The application supports all four CRUD operations:
 
-| Operation | Description |
-| --------- | ----------- |
-| Create | Add a new student |
-| Read | View students stored in PostgreSQL |
-| Update | Edit an existing student's information |
-| Delete | Remove a student |
+| Operation | HTTP Method | Description |
+| --------- | ----------- | ----------- |
+| Create | POST | Add a new student |
+| Read | GET | View student data |
+| Update | PUT / POST | Edit student information |
+| Delete | DELETE / POST | Remove a student |
 
-## Routes
+## Web Routes
 
 ### Home
 
@@ -115,7 +104,7 @@ Retrieves all students from PostgreSQL and displays them on the Student Director
 POST /add
 ```
 
-Receives the student's name and school, validates the input, and inserts a new student into PostgreSQL.
+Receives the student's name and school from an HTML form, validates the input, and inserts a new student into PostgreSQL.
 
 ### Edit Student
 
@@ -123,7 +112,7 @@ Receives the student's name and school, validates the input, and inserts a new s
 GET /edit/<student_id>
 ```
 
-Retrieves a specific student from PostgreSQL and displays their current information in an edit form.
+Retrieves a specific student and displays their current information in an edit form.
 
 ### Update Student
 
@@ -131,7 +120,7 @@ Retrieves a specific student from PostgreSQL and displays their current informat
 POST /update/<student_id>
 ```
 
-Validates the submitted information and updates the selected student's record in PostgreSQL.
+Validates submitted form data and updates the selected student.
 
 ### Delete Student
 
@@ -141,51 +130,161 @@ POST /delete/<student_id>
 
 Deletes the selected student from PostgreSQL.
 
+## REST API
+
+The application also provides JSON API endpoints.
+
+### Get All Students
+
+```text
+GET /api/students
+```
+
+Returns all students as JSON.
+
+Example response:
+
+```json
+[
+  {
+    "id": 1,
+    "name": "Matthew",
+    "school": "FSU"
+  }
+]
+```
+
+### Get One Student
+
+```text
+GET /api/students/<student_id>
+```
+
+Returns one student by ID.
+
+If the student does not exist, the API returns:
+
+```json
+{
+  "error": "Student not found"
+}
+```
+
+with a `404 Not Found` status.
+
+### Create Student
+
+```text
+POST /api/students
+```
+
+Accepts JSON data:
+
+```json
+{
+  "name": "Matthew",
+  "school": "FSU"
+}
+```
+
+A successful request returns the created student with a `201 Created` status.
+
+### Update Student
+
+```text
+PUT /api/students/<student_id>
+```
+
+Accepts updated JSON data and modifies the selected student.
+
+Example request:
+
+```json
+{
+  "name": "Updated Student",
+  "school": "Updated School"
+}
+```
+
+### Delete Student
+
+```text
+DELETE /api/students/<student_id>
+```
+
+Deletes the selected student.
+
+Example response:
+
+```json
+{
+  "message": "Student deleted"
+}
+```
+
 ## Request Flow
 
-When the user visits the application:
+### Web Page Request
 
 ```text
 Browser
     ↓
-GET /
+Flask route
+    ↓
+PostgreSQL
+    ↓
+SQL result
+    ↓
+Jinja template
+    ↓
+HTML response
+    ↓
+Browser
+```
+
+### API Request
+
+```text
+Client
+    ↓
+API endpoint
     ↓
 Flask
     ↓
 PostgreSQL
     ↓
-SELECT students
+SQL result
     ↓
-Flask receives database results
+JSON response
     ↓
-Jinja renders HTML
-    ↓
-Browser displays page
+Client
 ```
-
-When a user adds, edits, or deletes a student, Flask modifies the PostgreSQL database, commits the transaction, and redirects the browser back to the home page.
 
 ## Docker Architecture
 
 When running with Docker Compose:
 
 ```text
-Browser
-    ↓
-Flask container
-    ↓
-PostgreSQL container
+Browser / API Client
+        ↓
+Flask Container
+        ↓
+PostgreSQL Container
 ```
 
-The Flask application runs in the `web` container and PostgreSQL runs in the `db` container.
+The Flask application runs in the `web` container.
 
-Docker Compose places both containers on the same network. Flask connects to PostgreSQL using:
+PostgreSQL runs in the `db` container.
+
+Docker Compose places both services on the same Docker network.
+
+The Flask container connects to PostgreSQL using:
 
 ```text
 DB_HOST=db
 ```
 
-The browser reaches the Flask application through port `5000`.
+The browser reaches Flask through port `5000`.
 
 ## Project Structure
 
@@ -218,7 +317,7 @@ The `.env` file contains private configuration values and is excluded from Git u
 
 ## Environment Variables
 
-Create a `.env` file in the root of the project:
+Create a `.env` file in the project root:
 
 ```text
 DB_NAME=practice
@@ -230,19 +329,29 @@ SECRET_KEY=your_secret_key
 
 Do not commit the `.env` file to GitHub.
 
-When running with Docker Compose, the Flask container uses `DB_HOST=db` so it can connect to the PostgreSQL container.
+Docker Compose reads the database credentials from environment variables while using:
+
+```text
+DB_HOST=db
+```
+
+inside the Flask container.
 
 ## Running with Docker
 
-Docker Compose can run both the Flask application and PostgreSQL database together.
-
-Build and start the application:
+Build and start the Flask and PostgreSQL containers:
 
 ```bash
 docker compose up --build
 ```
 
-Then open:
+Or run them in the background:
+
+```bash
+docker compose up -d --build
+```
+
+Open:
 
 ```text
 http://127.0.0.1:5000
@@ -254,15 +363,15 @@ Stop the containers:
 docker compose down
 ```
 
-To also remove the PostgreSQL volume and reset the Docker database:
+To also delete the PostgreSQL Docker volume and reset the Docker database:
 
 ```bash
 docker compose down -v
 ```
 
-The PostgreSQL volume stores database data so it can persist when containers are stopped or recreated.
+The PostgreSQL volume allows database data to persist when containers are stopped or recreated.
 
-The `db/init.sql` file creates the `students` table when the PostgreSQL database is initialized for the first time.
+The `db/init.sql` file creates the `students` table when the Docker database is initialized for the first time.
 
 ## Running Without Docker
 
@@ -293,7 +402,7 @@ pip install -r requirements.txt
 
 ### 5. Configure PostgreSQL
 
-Create a PostgreSQL database and create the `students` table:
+Create a PostgreSQL database and the `students` table:
 
 ```sql
 CREATE TABLE students (
@@ -303,7 +412,7 @@ CREATE TABLE students (
 );
 ```
 
-Configure the database credentials inside the `.env` file.
+Configure the database credentials inside `.env`.
 
 ### 6. Run the Application
 
@@ -311,7 +420,7 @@ Configure the database credentials inside the `.env` file.
 python3 app.py
 ```
 
-Then open:
+Open:
 
 ```text
 http://127.0.0.1:5000
@@ -319,66 +428,89 @@ http://127.0.0.1:5000
 
 ## Testing
 
-The application includes automated tests using pytest.
+The project includes automated testing with pytest.
 
-Run the test suite with:
+Run all tests:
 
 ```bash
 pytest
 ```
 
-The tests cover:
+The test suite covers both the HTML web routes and the REST API.
+
+### Web Route Tests
+
+Tests include:
 
 - Home page response
 - Missing student 404 handling
-- Validation for blank input
+- Blank input validation
 - Adding a student
 - Updating a student
 - Deleting a student
+
+### API Tests
+
+Tests include:
+
+- Getting all students
+- Getting one student
+- Missing student 404 behavior
+- Creating a student with JSON
+- Updating a student with JSON
+- Deleting a student
+- Rejecting invalid JSON input
 
 A separate PostgreSQL test database is used so automated tests do not modify the normal development database.
 
 ## Validation
 
-The application performs server-side validation before inserting or updating records.
+The application performs server-side validation before inserting or updating student records.
 
-Input values are cleaned using `.strip()`:
+Form and API input values are cleaned using `.strip()`.
+
+Example:
 
 ```python
-name = request.form["name"].strip()
-school = request.form["school"].strip()
+name = data.get("name", "").strip()
+school = data.get("school", "").strip()
 ```
 
 Blank or whitespace-only values are rejected.
 
-When invalid input is submitted, Flask uses flash messages to display an error to the user without leaving the application.
+HTML routes use Flask flash messages for validation errors.
+
+API routes return JSON error messages with appropriate HTTP status codes.
 
 ## Error Handling
 
-The application checks whether requested students exist before editing, updating, or deleting them.
+The application checks whether requested students exist before editing, updating, deleting, or returning them through the API.
 
-If a student cannot be found, the application returns a `404 Not Found` response instead of continuing with an invalid database operation.
+Missing students return a `404 Not Found` response.
 
 The application also checks the number of database rows affected by update and delete operations.
 
 ## Security
 
-Database credentials and the Flask secret key are stored using environment variables instead of being hardcoded directly in the Python source code.
+Database credentials and the Flask secret key are stored using environment variables rather than being hardcoded directly in the Python source code.
 
-The `.env` file is ignored by Git so sensitive information is not uploaded to GitHub.
+The `.env` file is ignored by Git so private values are not uploaded to GitHub.
 
 Docker Compose references environment variables instead of storing private values directly in `compose.yaml`.
 
-SQL queries use parameterized values rather than inserting user input directly into SQL strings.
+SQL queries use parameterized values instead of directly inserting user input into SQL strings.
 
 ## What I Learned
 
 Building this project helped me understand:
 
-- How Flask applications handle HTTP requests
-- How GET and POST requests work
+- How Flask handles HTTP requests
+- How GET, POST, PUT, and DELETE requests work
 - How HTML forms send data to a backend
-- How dynamic Flask routes use URL parameters
+- How REST APIs expose backend data as JSON
+- How API endpoints are structured
+- How Flask reads JSON request bodies
+- How HTTP status codes communicate request results
 - How Flask communicates with PostgreSQL
 - How SQL `SELECT`, `INSERT`, `UPDATE`, and `DELETE` operations work
 - How PostgreSQL transactions use `commit()`
@@ -387,27 +519,28 @@ Building this project helped me understand:
 - How redirects work after POST requests
 - How server-side validation protects the backend
 - How Flask flash messages work across redirects
-- How sessions and secret keys support Flask features
-- How to handle missing database records
+- How missing database records are handled
 - How environment variables separate secrets from application code
 - How automated tests verify backend behavior
+- How pytest tests HTML routes and API endpoints
 - How pytest fixtures can clean up test data
+- How Flask's test client sends simulated requests
 - How Docker images and containers package an application
 - How Docker Compose runs multiple services together
 - How containers communicate over a Docker network
 - How Docker volumes persist database data
-- How SQL initialization scripts can prepare a database automatically
-- How to debug errors by reading application and container logs
-- How Git can track the development of a full-stack application
+- How SQL initialization scripts prepare a database automatically
+- How Git tracks the development of a full-stack application
 
 ## Future Improvements
 
-- Create JSON REST API endpoints
-- Add search and filtering
-- Add user authentication
-- Improve the user interface
 - Deploy the application online
-- Add production-ready application configuration
+- Add user authentication
+- Add search and filtering
+- Improve the user interface
+- Add pagination
+- Add more advanced API validation
+- Add production-ready server configuration
 
 ## Author
 
