@@ -2,7 +2,13 @@
 
 A full-stack web application built with Flask and PostgreSQL that allows users to add, view, edit, and delete student records.
 
-The project also includes a JSON REST API, automated pytest coverage, and Docker Compose support for running Flask and PostgreSQL in separate containers.
+The project also includes a JSON REST API, automated pytest coverage, Docker Compose support, and a live Railway deployment connected to a hosted PostgreSQL database.
+
+## Live Demo
+
+The application is deployed on Railway with a hosted PostgreSQL database.
+
+[View the Live Application]https://student-directory-production.up.railway.app/
 
 ## Screenshots
 
@@ -60,6 +66,9 @@ flowchart TD
 - PostgreSQL container managed with Docker Compose
 - Persistent PostgreSQL data using a Docker volume
 - Automatic database table initialization with SQL
+- Production server with Gunicorn
+- Live deployment on Railway
+- Hosted PostgreSQL database
 - Basic responsive styling
 
 ## Tech Stack
@@ -71,11 +80,14 @@ flowchart TD
 - pytest
 - Docker
 - Docker Compose
+- Gunicorn
+- Railway
 - HTML
 - CSS
 - Jinja
 - python-dotenv
 - Git
+- GitHub
 
 ## CRUD Operations
 
@@ -112,7 +124,7 @@ Receives the student's name and school from an HTML form, validates the input, a
 GET /edit/<student_id>
 ```
 
-Retrieves a specific student and displays their current information in an edit form.
+Retrieves a specific student from PostgreSQL and displays their current information in an edit form.
 
 ### Update Student
 
@@ -132,7 +144,7 @@ Deletes the selected student from PostgreSQL.
 
 ## REST API
 
-The application also provides JSON API endpoints.
+The application also provides JSON REST API endpoints.
 
 ### Get All Students
 
@@ -148,8 +160,8 @@ Example response:
 [
   {
     "id": 1,
-    "name": "Matthew",
-    "school": "FSU"
+    "name": "Alex Johnson",
+    "school": "Florida State University"
   }
 ]
 ```
@@ -182,8 +194,8 @@ Accepts JSON data:
 
 ```json
 {
-  "name": "Matthew",
-  "school": "FSU"
+  "name": "Alex Johnson",
+  "school": "Florida State University"
 }
 ```
 
@@ -262,7 +274,7 @@ Client
 
 ## Docker Architecture
 
-When running with Docker Compose:
+When running locally with Docker Compose:
 
 ```text
 Browser / API Client
@@ -285,6 +297,26 @@ DB_HOST=db
 ```
 
 The browser reaches Flask through port `5000`.
+
+## Deployment Architecture
+
+The production application is deployed on Railway.
+
+```text
+User
+ ↓
+Public Railway URL
+ ↓
+Gunicorn
+ ↓
+Flask Application
+ ↓
+Railway PostgreSQL
+```
+
+Railway hosts the Flask application and PostgreSQL database remotely, allowing the application to be accessed over the internet.
+
+Gunicorn is used as the production web server for the Flask application.
 
 ## Project Structure
 
@@ -336,6 +368,8 @@ DB_HOST=db
 ```
 
 inside the Flask container.
+
+In production, Railway environment variables are used to connect the Flask application to the hosted PostgreSQL database.
 
 ## Running with Docker
 
@@ -467,7 +501,7 @@ A separate PostgreSQL test database is used so automated tests do not modify the
 
 The application performs server-side validation before inserting or updating student records.
 
-Form and API input values are cleaned using `.strip()`.
+Input values are cleaned using `.strip()`.
 
 Example:
 
@@ -497,6 +531,8 @@ Database credentials and the Flask secret key are stored using environment varia
 The `.env` file is ignored by Git so private values are not uploaded to GitHub.
 
 Docker Compose references environment variables instead of storing private values directly in `compose.yaml`.
+
+Railway environment variables are used for production database credentials and application secrets.
 
 SQL queries use parameterized values instead of directly inserting user input into SQL strings.
 
@@ -530,19 +566,24 @@ Building this project helped me understand:
 - How containers communicate over a Docker network
 - How Docker volumes persist database data
 - How SQL initialization scripts prepare a database automatically
-- How Git tracks the development of a full-stack application
+- How Gunicorn runs Flask in a production environment
+- How to deploy a Flask application to a cloud platform
+- How a deployed application connects to a hosted PostgreSQL database
+- How production environment variables configure database connections
+- How to connect to and manage a remote PostgreSQL database
+- How to debug backend, database, Docker, and deployment errors using logs
+- How Git and GitHub track the development of a full-stack application
 
 ## Future Improvements
 
-- Deploy the application online
 - Add user authentication
 - Add search and filtering
 - Improve the user interface
 - Add pagination
 - Add more advanced API validation
-- Add production-ready server configuration
+- Add database migrations
 
 ## Author
 
-Matthew DeMarco
+Matthew DeMarco  
 Computer Science Student at Florida State University
