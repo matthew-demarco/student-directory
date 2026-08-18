@@ -8,7 +8,7 @@ The project also includes a JSON REST API, automated pytest coverage, Docker Com
 
 The application is deployed on Railway with a hosted PostgreSQL database.
 
-[View the Live Application]https://student-directory-production.up.railway.app/
+https://student-directory-production.up.railway.app/
 
 ## Screenshots
 
